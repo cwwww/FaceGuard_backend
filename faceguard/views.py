@@ -39,22 +39,41 @@ def response_failed_400():
     return Response(response, status=400)
 
 
+class RegisterCheck(APIView):
+    # check if the name already has been used, if yes return true
+    def post(self,request):
+        data = request.data
+        name = data['name']
+        try:
+            exit_user = User.objects.get(name=name)
+            res = {"user_exist": True}
+        except:
+            res = {"user_exist": False}
+
+        print(res)
+        return response_success_200(res)
+
+
+
 class SaveUserInfo(APIView):
+    # save the user's info into database
     def post(self, request):
         data = request.data
         print(data)
         img_data = base64.b64decode(data["img"])
-        last_id = User.objects.all().order_by("-user_id")[:1]
-        img_name = str(last_id[0].user_id + 1) + '.jpg'
-        img_url = img_path + img_name
+        img_name = data["name"] + '.jpg'
+        img_url = img_path + img_name  # original image save path
         with open(img_url, 'wb') as f:
             f.write(img_data)
         print(img_name)
+
+        # detect whether this image contain a face, if yes save everything
         has_face = crop(img_path + img_name,crop_path, rectangle_path,dlib_path)
         print(has_face)
+        img_path_database = crop_path + img_name  # cropped face path in database
         if has_face:
             new_user = User(name=request.data['name'],address=request.data['address'],sex= request.data['sex'],
-                            age=request.data['age'],job=request.data['job'])
+                            age=request.data['age'],job=request.data['job'],image=img_path_database)
             new_user.save()
 
         res = {"has_face": has_face}

@@ -19,6 +19,6 @@ from faceguard import views
 
 urlpatterns = [
     url(r'^saveUserInfo/$',views.SaveUserInfo.as_view()),
-
+    url(r'^registerCheck/$',views.RegisterCheck.as_view())
 
 ]
