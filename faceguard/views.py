@@ -6,13 +6,13 @@ from rest_framework.mixins import Response
 from rest_framework.views import APIView
 from .models import User
 from .cropFaces import crop
-
+from .register.regist import user_reg
 
 current_path = os.path.dirname(__file__)
 img_path = './images/'
 dlib_path = './model/shape_predictor_68_face_landmarks.dat'
-crop_path = './images_crop/'
-rectangle_path = './images_rectangle/'
+crop_path = '/cropped_gallery/'
+rectangle_path = '/images_rectangle/'
 
 def response_success_200(res={}):
     """
@@ -62,19 +62,21 @@ class SaveUserInfo(APIView):
         print(data)
         img_data = base64.b64decode(data["img"])
         img_name = data["name"] + '.jpg'
-        img_url = img_path + img_name  # original image save path
+        img_url = current_path + img_path + img_name  # original image save path
         with open(img_url, 'wb') as f:
             f.write(img_data)
         print(img_name)
 
         # detect whether this image contain a face, if yes save everything
-        has_face = crop(img_path + img_name,crop_path, rectangle_path,dlib_path)
+        has_face = crop(img_url,crop_path, rectangle_path,dlib_path)
         print(has_face)
         img_path_database = crop_path + img_name  # cropped face path in database
         if has_face:
             new_user = User(name=request.data['name'],address=request.data['address'],sex= request.data['sex'],
                             age=request.data['age'],job=request.data['job'],image=img_path_database)
             new_user.save()
+            user_reg(img_name)
+
 
         res = {"has_face": has_face}
         return response_success_200(res)
